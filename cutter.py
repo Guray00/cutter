@@ -50,10 +50,10 @@ def crop(path, x=-1, y=-1, width=-1, height=-1, meta="cut"):
 	filename = filename.replace("[JUNK]", "")
 
 	if (x == -1 or y == -1 or width == -1 or height == -1):
-		command= f'ffmpeg -i {path} -hide_banner -metadata comment="cut" -c copy {filename}[CUT]{file_extension}'
+		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -c copy {filename}[CUT]{file_extension}'
 	
 	else:
-		command= f'ffmpeg -i {path} -hide_banner -metadata comment="cut" -filter:v "crop={width}:{height}:{x}:{y}" -threads 0 -preset ultrafast {filename}[CUT]{file_extension}'
+		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -filter:v "crop={width}:{height}:{x}:{y}" -threads 0 -preset ultrafast {filename}[CUT]{file_extension}'
 	
 	#print(command)
 	os.system(command)
@@ -65,21 +65,24 @@ def crop(path, x=-1, y=-1, width=-1, height=-1, meta="cut"):
 def checkCut(__file__):
 	try:
 		video = TinyTag.get(i) 
-		if(video.comment != "cut"): # se il video non è già compresso lo elabora
+		if(video.comment != "cut" and "[JUNK]" not in __file__): # se il video non è già compresso lo elabora
 			return False
 		return True
 
 	except:
-		return False
+        	if ("[JUNK]" not in __file__ ):
+            		return False
+			
+	return False
 
 
 # TAGLIA IL FILE
 def cut(__file__):
 	simple = "simple_ehm-runnable.py"
 	#--generate-training-data
-	command = f'python3 {simple} {__file__} --name "[JUNK]"'
+	command = f'python3 {simple} "{__file__}" --name "[JUNK]"'
 
-	#print(command)
+	print(command)
 	os.system("cd simple-ehm && " + command)
 
 	filename, file_extension = os.path.splitext(__file__)
