@@ -31,7 +31,20 @@ def win_elaborate(type):
 	os.system(command)
 	os.system("move \"{}\" \"{}\"".format(i, i.replace(".\\", ".\\fatti\\")))
 
+def elabor(path):
+	command = "ffmpeg -i \"{}\" -vcodec libx265 -crf 28 -metadata comment=\"compressed\" \"{}\"".format(i, "./lite/"+i.replace(type, "[lite]."+type).replace("./", ""))
+	
+	filename, file_extension = os.path.splitext(path)
 
+	name = os.path.basename(filename)
+	output = os.path.abspath(path+"/lite/"+ name)
+
+	name = os.path.basename(filename)
+	command = f'ffmpeg -i {filename} -vcodec libx265 -crf 30 - metadata comment="compressed" {output}[lite]{file_extension}'
+	
+	print(command)
+	fatti = os.path.abspath(path+"/fatti/"+ name + file_extension)
+	os.rename(path, fatti)
 
 if __name__ == "__main__":
 	# os.system("mkdir -p /tmp/squeeze/")
