@@ -52,13 +52,17 @@ def crop(path, x=-1, y=-1, width=-1, height=-1, meta="cut"):
 	filename = filename.replace("[JUNK]", "")
 
 	if (x == -1 or y == -1 or width == -1 or height == -1):
-		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -c copy {filename}[CUT]{file_extension}'
+		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -c copy "{filename}[CUT]{file_extension}"'
 	
 	else:
-		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -filter:v "crop={width}:{height}:{x}:{y}" -threads 0 -preset ultrafast {filename}[CUT]{file_extension}'
+		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -filter:v "crop={width}:{height}:{x}:{y}" -threads 0 -preset ultrafast "{filename}[CUT]{file_extension}"'
 	
-	#print(command)
-	os.system(command)
+	print(command)
+
+	try:
+		os.system(command)
+	except:
+		raise("Maybe not teams file")
 
 	return f"{filename}[CUT]{file_extension}"
 
@@ -81,7 +85,8 @@ def checkCut(__file__):
 # TAGLIA IL FILE
 def cut(__file__):
 	filename, file_extension = os.path.splitext(__file__)
-	output = f"{filename}[JUNK]{file_extension}"
+	name = os.path.basename(filename)
+	output = f"{name}[JUNK]{file_extension}"
 	simple = "simple_ehm-runnable.py"
 	#--generate-training-data
 
@@ -95,9 +100,24 @@ def cut(__file__):
 	os.system("cd simple-ehm && " + command)
 
 	
-	return f'{output}'
+	return f'{filename}[JUNK]{file_extension}'
 
-	
+
+def moveTrainingData(filename):
+	if (args.generate_training_data == ""):
+		return
+
+	filen, file_extension = os.path.splitext(filename)
+	name = os.path.basename(filen)
+
+	x = glob.glob("simple-ehm/training_data/*.wav")
+
+	if not os.path.exists(f'training_data/{name} creato'):
+        	os.makedirs(f'training_data/{name}')
+
+	for i in x:
+		wav = os.path.basename(i)
+		os.rename(i, f'training_data/{name}/{wav}')
 
 
 if __name__ == "__main__":
@@ -136,7 +156,7 @@ if __name__ == "__main__":
 		# REMOVES JUNKS
 		try:
 			print("===> " + i + " DONE")
-
+			#input("waiting")
 			# sposto in cut il file elaborato
 			pos = os.path.abspath(location + "/cut/" + os.path.basename(filename))
 			os.rename(filename, pos)
@@ -147,6 +167,7 @@ if __name__ == "__main__":
 
 			# elimino il file junk senza crop e metadata
 			os.remove(filename.replace("[CUT]","[JUNK]"))
+			moveTrainingData(i)
 		except:
 			pass
 		

@@ -1,1 +1,3 @@
 test.py
+*.wav
+training_data
