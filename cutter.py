@@ -13,6 +13,8 @@ WORKING = ""
 parser = argparse.ArgumentParser()
 parser.add_argument("foldername", help="video file name (or full file path) to classify")
 parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
+parser.add_argument("--generate-training-data", default="", action='store_true', help="export extracted ehm(s) and silences as well to a separate folder. Useful for training on false positives")
+
 args = parser.parse_args()
 
 
@@ -78,15 +80,22 @@ def checkCut(__file__):
 
 # TAGLIA IL FILE
 def cut(__file__):
+	filename, file_extension = os.path.splitext(__file__)
+	output = f"{filename}[JUNK]{file_extension}"
 	simple = "simple_ehm-runnable.py"
-	#--generate-training-data		TODO: FIX SU NAME
-	command = f'python3 {simple} "{__file__}" --name "[JUNK]"'
+	#--generate-training-data
+
+	gtd = ""
+	if(args.generate_training_data):
+		gdt = "--generate-training-data"
+
+	command = f'python3 {simple} "{__file__}" --output "{output}" {gdt}'
 
 	print(command)
 	os.system("cd simple-ehm && " + command)
 
-	filename, file_extension = os.path.splitext(__file__)
-	return f'{filename}[JUNK]{file_extension}'
+	
+	return f'{output}'
 
 	
 
