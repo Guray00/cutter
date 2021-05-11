@@ -28,8 +28,8 @@ def signal_handler(sig, frame):
 		
 		# elimino i file non completati
         try:
-            os.remove(f'{filename}.wav')
-            print(f'==> Removed {filename}.wav')
+            #os.remove(f'{filename}.wav')
+            #print(f'==> Removed {filename}.wav')
             os.remove(f'{filename}[JUNK]{file_extension}')
             print(f'==> Removed {filename}[JUNK]{file_extension}')
             os.remove(f'{filename}[CUT]{file_extension}')
