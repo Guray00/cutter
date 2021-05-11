@@ -79,7 +79,7 @@ def checkCut(__file__):
 # TAGLIA IL FILE
 def cut(__file__):
 	simple = "simple_ehm-runnable.py"
-	#--generate-training-data
+	#--generate-training-data		TODO: FIX SU NAME
 	command = f'python3 {simple} "{__file__}" --name "[JUNK]"'
 
 	print(command)
