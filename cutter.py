@@ -94,7 +94,7 @@ def cut(__file__):
 	if(args.generate_training_data):
 		gdt = "--generate-training-data"
 
-	command = f'python3 {simple} "{__file__}" --output "{output}" {gdt}'
+	command = f'python3 {simple} "{__file__}" --output "{output}" {gdt} --keep speech ehm'
 
 	print(command)
 	os.system("cd simple-ehm && " + command)
