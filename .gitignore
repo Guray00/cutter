@@ -1,3 +1,5 @@
 test.py
 *.wav
 training_data
+*.mp4
+*.bat

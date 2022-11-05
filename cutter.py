@@ -6,6 +6,7 @@ import sys
 from tinytag import TinyTag 
 import argparse
 import signal
+import platform
 
 
 # GESTIONE ARGOMENTI
@@ -13,16 +14,27 @@ WORKING = ""
 parser = argparse.ArgumentParser()
 parser.add_argument("foldername", help="video file name (or full file path) to classify")
 parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
-parser.add_argument("--generate-training-data", default="", action='store_true', help="export extracted ehm(s) and silences as well to a separate folder. Useful for training on false positives")
 
 args = parser.parse_args()
 
+# print text at center of screen
+def print_centered(text):
+	print("\033[1;37;40m")
+	print(text.center(os.get_terminal_size().columns))
+	print("\033[0;37;40m")
+ 
+ 
+ # print full line of "="
+def print_line():
+    print("─"*os.get_terminal_size().columns)
 
 # GESTIONE CHIUSURA IMPROVVISA
 def signal_handler(sig, frame):
-    print('\n\n============== DETECTED FORCE CLOSE ==============\n')
-    print("current: " + WORKING)
-
+    print_line()
+    print_centered("Rilevata chiusura forzata")
+    print_centered("In corso: " + WORKING)
+    print("\n\n")
+    
     if (WORKING != ""):
         filename, file_extension = os.path.splitext(WORKING)
 		
@@ -38,10 +50,13 @@ def signal_handler(sig, frame):
         except:
             pass
 	
+    print_line()
     print("\n\n\n")
     sys.exit(0)
-
+    
+# handler di CTRL+C
 signal.signal(signal.SIGINT, signal_handler)
+
 
 
 # TAGLIA IL VIDEO E AGGIUNGE IL METADATA
@@ -67,7 +82,7 @@ def crop(path, x=-1, y=-1, width=-1, height=-1, meta="cut"):
 	return f"{filename}[CUT]{file_extension}"
 
 
-# CONTROLLA CHE NON SIA UN VIDEO GIA' ELABORATO
+# verifica che sia un file non ancora elaborato
 def checkCut(__file__):
 	try:
 		video = TinyTag.get(i) 
@@ -82,47 +97,45 @@ def checkCut(__file__):
 	return False
 
 
-# TAGLIA IL FILE
+# taglia il file
 def cut(__file__):
-	filename, file_extension = os.path.splitext(__file__)
-	name = os.path.basename(filename)
-	output = f"{name}[JUNK]{file_extension}"
-	simple = "simple_ehm-runnable.py"
-	#--generate-training-data
+	filename, file_extension = os.path.splitext(__file__)		# recupero il filename ed estensione
+	name = os.path.basename(filename)							# recupero il nome del file con estensione
+	output = f"{filename}[JUNK]{file_extension}"				# creo il nome del file di output
+	scriptname = "./Remsi/remsi.py"								# recupero il nome dello script di remsi
+	tempfile = "temp"											# nome del file temporaneo
+ 
+	# creo un file .bat su windows
+	p = platform.platform()+""
+	if "Windows" in p:
+		tempfile += ".bat"
 
-	gtd = ""
-	if(args.generate_training_data):
-		gtd = "--generate-training-data"
-
-	command = f'python3 {simple} "{__file__}" --output "{output}" {gtd} --keep speech ehm'
-
+	# eseguo remsi per la rilevazione dei silenzi
+	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n=-40dB:d=0.75 -f null - 2>&1 | python {scriptname} > {tempfile}'
+	print_line()
+	print_centered("Generando il comando")
 	print(command)
-	os.system("cd simple-ehm && " + command)
-
+	print_line()
+	print("\n")
+	os.system(command)
+ 
 	
-	return f'{filename}[JUNK]{file_extension}'
+	# eseguo il comando di taglio
+	print_line()
+	print_centered("Eseguendo il taglio")
+	print_line()
+	print("\n")
+	os.system(tempfile)
+ 
+	# restituisci il nome del file di output
+	return output
 
 
-def moveTrainingData(filename):
-	if (args.generate_training_data == ""):
-		return
 
-	filen, file_extension = os.path.splitext(filename)
-	name = os.path.basename(filen)
-
-	x = glob.glob("simple-ehm/training_data/*.wav")
-
-	if not os.path.exists(f'training_data/{name} creato'):
-        	os.makedirs(f'training_data/{name}')
-
-	for i in x:
-		wav = os.path.basename(i)
-		os.rename(i, f'training_data/{name}/{wav}')
-
-
+# =================== MAIN ===================
 if __name__ == "__main__":
-	folder = args.foldername	
-	location = os.path.abspath(folder)
+	folder = args.foldername				# recupero il nome della cartella
+	location = os.path.abspath(folder)		# recupero la posizione della cartella
 	
 	# creo la cartella fatti se non presente
 	if not os.path.exists(location+"/fatti"):
@@ -137,26 +150,34 @@ if __name__ == "__main__":
 	y = glob.glob(f"{location}/*.mkv")
 	z = x + y
 	
+	# per ogni video esaminato
 	for i in z:		
 		print("===> " + i)
 			
+		# se il video non è già stato elaborato
 		if(checkCut(i)):
 			continue
 
 		
-		WORKING = i
-		filename = cut(i)
+		WORKING = i				# setto il file che sto elaborando
+		filename = cut(i) 		# eseguo il taglio
 
+		# verifico se è un video di teams
 		if (args.teams):
 			filename = crop(filename, 62, 0, 1796, 972)
 	
+		# altrimenti aggiungo solo i metadata
 		else:
 			filename = crop(filename)
 
-		# REMOVES JUNKS
+		# rimuovo i file inutili
 		try:
-			print("===> " + i + " DONE")
-			#input("waiting")
+			print("\n")
+			print_line()
+			print_centered(i+" completato")
+			print_line()
+			print("\n")
+   
 			# sposto in cut il file elaborato
 			pos = os.path.abspath(location + "/cut/" + os.path.basename(filename))
 			os.rename(filename, pos)
@@ -167,8 +188,8 @@ if __name__ == "__main__":
 
 			# elimino il file junk senza crop e metadata
 			os.remove(filename.replace("[CUT]","[JUNK]"))
-			moveTrainingData(i)
+   
 		except:
-			pass
+			print("Errore con il file: " + i)
 		
 		
