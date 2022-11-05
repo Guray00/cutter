@@ -45,10 +45,10 @@ def print_line():
 
 # GESTIONE CHIUSURA IMPROVVISA
 def signal_handler(sig, frame):
+    print()
     print_line()
     print_centered("Rilevata chiusura forzata")
     print_centered("In corso: " + WORKING)
-    print("\n\n")
     
     if (WORKING != ""):
         filename, file_extension = os.path.splitext(WORKING)
@@ -58,15 +58,12 @@ def signal_handler(sig, frame):
             #os.remove(f'{filename}.wav')
             #print(f'==> Removed {filename}.wav')
             os.remove(f'{filename}[JUNK]{file_extension}')
-            print(f'==> Removed {filename}[JUNK]{file_extension}')
             os.remove(f'{filename}[CUT]{file_extension}')
-            print(f'==> Removed {filename}[CUT]{file_extension}')			
-
         except:
             pass
 	
     print_line()
-    print("\n\n\n")
+    print("\n\n")
     sys.exit(0)
     
 # handler di CTRL+C
@@ -119,16 +116,11 @@ def cut(__file__):
 	output = f"{filename}[JUNK]{file_extension}"				# creo il nome del file di output
 	scriptname = "./Remsi/remsi.py"								# recupero il nome dello script di remsi
 	tempfile = "temp"											# nome del file temporaneo
- 
-	# creo un file .bat su windows
-	p = platform.platform()+""
-	if "Windows" in p:
-		tempfile += ".bat"
 
 	# eseguo remsi per la rilevazione dei silenzi
 	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n={args.n}dB:d={args.d} -f null - 2>&1 | python {scriptname} > {tempfile}'
 	print_line()
-	print_centered("Generando il comando")
+	print_centered(f"Generando il comando ({__file__})")
 	print(command)
 	print_line()
 	print("\n")
@@ -136,9 +128,9 @@ def cut(__file__):
  
 	
 	# eseguo il comando di taglio
-	command = f'ffmpeg -i "{__file__}" -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -map_chapters -1 "{output}"'
+	command = f'ffmpeg -i "{__file__}" -hide_banner -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -map_chapters -1 "{output}"'
 	print_line()
-	print_centered("Eseguendo il taglio")
+	print_centered(f"Eseguendo il taglio ({__file__})")
 	print(command)
 	print_line()
 	print("\n")
@@ -169,8 +161,6 @@ if __name__ == "__main__":
 	
 	# per ogni video esaminato
 	for i in z:		
-		print("===> " + i)
-			
 		# se il video non è già stato elaborato
 		if(checkCut(i)):
 			continue
