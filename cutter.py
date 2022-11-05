@@ -13,6 +13,16 @@ NOISE=-40
 DURATION = 0.80
 WORKING = ""
 
+# calculate difference between two video duration
+def durationDiff(original, edited):
+	try:
+		video = TinyTag.get(original) 
+		video2 = TinyTag.get(edited) 
+
+		return int((abs(video.duration - video2.duration))/60)
+
+	except:
+		return 0
 
 # argomenti
 parser = argparse.ArgumentParser()
@@ -181,7 +191,8 @@ if __name__ == "__main__":
 		try:
 			print("\n")
 			print_line()
-			print_centered(i+" completato")
+			elapsed = durationDiff(i, filename)
+			print_centered(f"{i} completato, risparmiati: {elapsed} minuti")
 			print_line()
 			print("\n")
    
