@@ -10,6 +10,8 @@ Per riconoscere un silenzio sono stati usati i seguenti parametri:
 |Durata| 0.75 secondi|
 | Tolleranza| -40db |
 
+_Nota: più è basso in modulo la tolleranza più è semplice il taglio, esempio: -40db taglia maggiormente di -50db_
+
 ## Parametri
 ```text
 --teams 	# esegue il crop del video eliminando le bande nere di teams (versione 2021)
