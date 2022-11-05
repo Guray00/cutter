@@ -8,15 +8,18 @@ import argparse
 import signal
 import platform
 
+# costanti di default
 NOISE=-40
 DURATION = 0.80
-
-# GESTIONE ARGOMENTI
 WORKING = ""
-parser = argparse.ArgumentParser()
-parser.add_argument("foldername", help="video file name (or full file path) to classify")
-parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
 
+
+# argomenti
+parser = argparse.ArgumentParser()
+parser.add_argument("foldername", help="video file name (or full file path) to cut")
+parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
+parser.add_argument('-d', type=int, required=False, default=DURATION, help='duration of silence in seconds')
+parser.add_argument('-n', type=int, required=False, default=NOISE, help='noise level in dB')
 args = parser.parse_args()
 
 # print text at center of screen
@@ -113,7 +116,7 @@ def cut(__file__):
 		tempfile += ".bat"
 
 	# eseguo remsi per la rilevazione dei silenzi
-	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n={NOISE}dB:d={DURATION} -f null - 2>&1 | python {scriptname} > {tempfile}'
+	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n={args.n}dB:d={args.d} -f null - 2>&1 | python {scriptname} > {tempfile}'
 	print_line()
 	print_centered("Generando il comando")
 	print(command)
