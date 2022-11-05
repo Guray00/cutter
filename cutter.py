@@ -47,8 +47,8 @@ def print_line():
 def signal_handler(sig, frame):
     print()
     print_line()
-    print_centered("Rilevata chiusura forzata")
-    print_centered("In corso: " + WORKING)
+    print_centered("⛔️ Rilevata \033[91mchiusura\033[0m forzata ⛔️")
+    print_centered("Era in corso: " + WORKING)
     
     if (WORKING != ""):
         filename, file_extension = os.path.splitext(WORKING)
@@ -120,8 +120,8 @@ def cut(__file__):
 	# eseguo remsi per la rilevazione dei silenzi
 	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n={args.n}dB:d={args.d} -f null - 2>&1 | python {scriptname} > {tempfile}'
 	print_line()
-	print_centered(f"Generando il comando ({__file__})")
-	print(command)
+	print_centered(f"💡 Sto \033[93mgenerando\033[0m il comando di taglio ({__file__})")
+	print("\x1B[3m"+command+"\x1B[0m")
 	print_line()
 	print("\n")
 	os.system(command)
@@ -130,8 +130,8 @@ def cut(__file__):
 	# eseguo il comando di taglio
 	command = f'ffmpeg -i "{__file__}" -hide_banner -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -map_chapters -1 "{output}"'
 	print_line()
-	print_centered(f"Eseguendo il taglio ({__file__})")
-	print(command)
+	print_centered(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})")
+	print("\x1B[3m"+command+"\x1B[0m")
 	print_line()
 	print("\n")
 	os.system(command)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 			print("\n")
 			print_line()
 			elapsed = durationDiff(i, filename)
-			print_centered(f"{i} completato, risparmiati: {elapsed} minuti")
+			print_centered(f"✅ {i} \033[92mCompletato!\033[0m risparmiati: {elapsed} minuti")
 			print_line()
 			print("\n")
    
@@ -200,6 +200,6 @@ if __name__ == "__main__":
 			os.remove("./vfilter.txt")
    
 		except:
-			print("Non ho spostato il file: " + i)
+			print("⚠️ Non ho spostato il file: " + i)
 		
 		

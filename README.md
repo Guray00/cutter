@@ -19,9 +19,13 @@ _Nota: più è basso in modulo la tolleranza più è semplice il taglio, esempio
 
 ## Installazione
 
+Prerequisiti:
+- **python** installato
+- **ffmpeg** installato
+
 Clona questa repo in una cartella comoda:
 ```bash
-https://github.com/Guray00/squeeze
+git clone https://github.com/Guray00/squeeze
 ```
 
 Entra nella cartella:
