@@ -8,6 +8,8 @@ import argparse
 import signal
 import platform
 
+NOISE=-40
+DURATION = 0.80
 
 # GESTIONE ARGOMENTI
 WORKING = ""
@@ -111,7 +113,7 @@ def cut(__file__):
 		tempfile += ".bat"
 
 	# eseguo remsi per la rilevazione dei silenzi
-	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n=-40dB:d=0.75 -f null - 2>&1 | python {scriptname} > {tempfile}'
+	command = f'ffmpeg -i "{__file__}" -hide_banner -af silencedetect=n={NOISE}dB:d={DURATION} -f null - 2>&1 | python {scriptname} > {tempfile}'
 	print_line()
 	print_centered("Generando il comando")
 	print(command)
@@ -121,11 +123,13 @@ def cut(__file__):
  
 	
 	# eseguo il comando di taglio
+	command = f'ffmpeg -i "{__file__}" -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -map_chapters -1 "{output}"'
 	print_line()
 	print_centered("Eseguendo il taglio")
+	print(command)
 	print_line()
 	print("\n")
-	os.system(tempfile)
+	os.system(command)
  
 	# restituisci il nome del file di output
 	return output
@@ -188,8 +192,10 @@ if __name__ == "__main__":
 
 			# elimino il file junk senza crop e metadata
 			os.remove(filename.replace("[CUT]","[JUNK]"))
+			os.remove("./afilter.txt")
+			os.remove("./vfilter.txt")
    
 		except:
-			print("Errore con il file: " + i)
+			print("Non ho spostato il file: " + i)
 		
 		

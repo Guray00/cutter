@@ -3,3 +3,5 @@ test.py
 training_data
 *.mp4
 *.bat
+temp
+*.txt
