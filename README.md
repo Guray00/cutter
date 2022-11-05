@@ -29,9 +29,9 @@ Entra nella cartella:
 cd squeeze
 ```
 
-Installa le dipendenze
+Installa le dipendenze:
 ```bash
-pip install -r .\requirements.txt
+pip install -r ./requirements.txt
 ```
 Sei pronto per l'utilizzo!
 
@@ -41,6 +41,6 @@ Per eseguire il programma è sufficiente:
 python3 cutter.py "path-to-folder"
 ```
 
-Tutti i file mp4 o mkv della cartella verranno elaborati. Con il parametro `--teams` si esegue anche un crop per ritagliare i file di teams.
+Tutti i file `.mp4` o `.mkv` della cartella verranno elaborati. Con il parametro `--teams` si esegue anche un crop per ritagliare i file di teams.
 
-I file originali verranno spostati in `fatti` mentre le versioni tagliate in `cut`
+I file originali verranno spostati in `fatti` mentre le versioni tagliate in `cut`.
