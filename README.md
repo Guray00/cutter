@@ -19,7 +19,7 @@ _Nota: più è basso in modulo la tolleranza più è semplice il taglio, esempio
 
 ## Installazione
 
-Clona la questa repo in una cartella comoda:
+Clona questa repo in una cartella comoda:
 ```bash
 https://github.com/Guray00/squeeze
 ```
