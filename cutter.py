@@ -128,7 +128,7 @@ def cut(__file__):
  
 	
 	# eseguo il comando di taglio
-	command = f'ffmpeg -i "{__file__}" -hide_banner -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -map_chapters -1 "{output}"'
+	command = f'ffmpeg -ignore_chapters 1 -i "{__file__}" -hide_banner -filter_script:v "./vfilter.txt" -filter_script:a "./afilter.txt" -c:a aac "{output}"'
 	print_line()
 	print_centered(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})")
 	print("\x1B[3m"+command+"\x1B[0m")
