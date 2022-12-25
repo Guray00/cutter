@@ -1,5 +1,3 @@
-# ffmpeg -i input.mp4 -metadata comment="compressed" -c copy output.mp4
-
 import glob
 import os
 import sys
@@ -28,6 +26,10 @@ try:
 	if (os.environ["EXPORT"] == "win"):
 		base_path = sys._MEIPASS
 		FFMPEG_CMD = base_path + "\\ffmpeg.exe"
+
+	elif (os.environ["EXPORT"] == "linux"):
+		base_path = sys._MEIPASS
+		FFMPEG_CMD = base_path + "/ffmpeg"
    
 except:
 	FFMPEG_CMD = "ffmpeg"

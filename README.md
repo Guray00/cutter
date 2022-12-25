@@ -54,6 +54,24 @@ To cut a single video file with a silence duration of 1 second and a noise level
 cutter.exe -d 1 -n -30 --keep-cfr path/to/video.mp4
 ```
 
+## Compile
+
+### Windows
+
+Copy in the same folder the `ffmpeg.exe` file and:
+
+```bash
+pyinstaller -F --add-data "ffmpeg.exe;." --runtime-hook ".win_export.py" .\cutter.py
+```
+
+## Linux
+
+Copy in the same folder the `ffmpeg` file and:
+
+```bash
+python3 -m PyInstaller -F --add-data "ffmpeg:." --runtime-hook ".linux_export.py" ./cutter.py
+```
+
 ## Contributions
 
 Contributions are welcome! If you want to contribute to the project, please fork the repository and create a pull request.
