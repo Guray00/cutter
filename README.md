@@ -78,4 +78,4 @@ Contributions are welcome! If you want to contribute to the project, please fork
 
 ## License
 
-_To be defined._
+This software is released under [_Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License_](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).

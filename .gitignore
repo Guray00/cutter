@@ -4,9 +4,9 @@ training_data
 *.mp4
 *.bat
 temp
-*.txt
 __pycache__
 build
 dist
 ffmpeg.exe
+ffmpeg
 cutter.spec
