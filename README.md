@@ -1,74 +1,63 @@
-# Cutter
+# cutter
 
-Utility per la compressione e ritaglio dei silenzi all'interno delle lezioni. 
+**Cutter** is a command-line tool that allows you to cut a video file or a folder containing multiple video files based on silence and noise level. It is based on [Remsi](https://github.com/bambax/Remsi), a library for audio and video processing. The tool is implemented in Python and can be used on Windows, Linux, and Mac OS.
 
-Basato sul lavoro svolto da [Remsi](https://github.com/bambax/Remsi), prende in input il path di una cartelle ed esegue il taglio di tutti i video indicati.
+## Installation
 
-Per riconoscere un silenzio sono stati usati, di default, i seguenti parametri:
+Pre builds are available in the [releases](https://github.com/Guray00/cutter/releases).
 
-|Parametro| valore|
-|----|-----|
-|Durata| 0.8 secondi|
-| Tolleranza| -40db |
-
-_Nota: più è basso in modulo la tolleranza più è semplice il taglio, esempio: -40db taglia maggiormente di -50db_
-
-
-## Installazione
-
-Prerequisiti:
-
-- aver installato **python** [(download Windows)](https://www.python.org/ftp/python/3.11.1/python-3.11.1-amd64.exe)
-- aver installato **ffmpeg** [(download Windows)](https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip)
-
-Clona questa repo in una cartella comoda:
+Before installing cutter (if you don't use the pre build version), you must have installed **ffmpeg** and **python**. Clone the repository from GitHub and install the required dependencies using pip:
 
 ```bash
-git clone https://github.com/Guray00/cutter
+git clone https://github.com/guray00/cutter.git
+cd cutter
+pip install -r requirements.txt
 ```
 
-Entra nella cartella:
 
-```bash
-cd squeeze
-```
-
-Clona la repo di Remsi:
-
-```bash
-git clone https://github.com/Guray00/Remsi/tree/916b6a1fbfc4fcdec2dc617f7e8fd746a0cc3281
-```
-
-Installa le dipendenze:
-
-```bash
-pip install -r ./requirements.txt
-```
-
-Sei pronto per l'utilizzo!
-
-## Utilizzo
-Per eseguire il programma è sufficiente:
-
-```bash
-python3 cutter.py "path-to-folder"
-```
-
-Mentre le opzioni possiibili sono:
+## Usage
 
 ```text
-usage: cutter.py [-h] [--teams] [-d D] [-n N] foldername
+usage: cutter.exe [-h] [-d D] [-n N] [-fr FR] [-x X] [-vfr] [--keep-cfr] [--preview] path
 
 positional arguments:
-  foldername  video file name (or full file path) to classify
+  path        the path of the video or the folder (for many videos) to cut
 
 options:
   -h, --help  show this help message and exit
-  --teams     crops the video
-  -d D        duration of silence in seconds
-  -n N        noise level in dB
+  -d D        duration of silence in seconds (default: 0.8)
+  -n N        noise level in dB (default: -40)
+  -fr FR      output video frame rate
+  -x X        Speed of the video
+  -vfr        variable frame rate on output (if -fr is given, it indicates the max number of duplicates frames per second)
+  --keep-cfr  keeps Constant Frame Rate version of the file for future editing.
+  --preview   makes a preview of 180 seconds
 ```
 
-Tutti i file `.mp4` o `.mkv` della cartella verranno elaborati. Con il parametro `--teams` si esegue anche un crop per ritagliare i file di teams.
+## Examples
 
-I file originali verranno spostati in `fatti` mentre le versioni tagliate in `cut`.
+To cut a single video file with a silence duration of 1 second and a noise level of -30 dB:
+
+```bash
+cutter.exe -d 1 -n -30 path/to/video.mp4
+```
+
+To cut all the video files in a folder with a silence duration of 0.5 seconds and a noise level of -45 dB, and create a preview of each file:
+
+```bash
+cutter.exe --preview -d 0.5 -n -45 path/to/folder
+```
+
+To cut a single video file with a silence duration of 1 second and a noise level of -30 dB, and keep the Constant Frame Rate version of the file:
+
+```bash
+cutter.exe -d 1 -n -30 --keep-cfr path/to/video.mp4
+```
+
+## Contributions
+
+Contributions are welcome! If you want to contribute to the project, please fork the repository and create a pull request.
+
+## License
+
+_To be defined._

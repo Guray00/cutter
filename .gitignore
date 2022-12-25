@@ -5,3 +5,8 @@ training_data
 *.bat
 temp
 *.txt
+__pycache__
+build
+dist
+ffmpeg.exe
+cutter.spec
