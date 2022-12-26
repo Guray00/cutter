@@ -199,7 +199,7 @@ def speed(_input_file):
 	_t 	 = f"-t 180" if (args.preview)  else "" 				# modalità preview
 	
 	pts = 1/args.x
-	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast {_tmp_output}'
+	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast "{_tmp_output}"'
 	fancy_print(f"🚀 Sto \033[33mvelocizzando\033[0m il video ({_input_file})", command)
 	os.system(command)
 	# os.replace(_tmp_output, _input_file)
@@ -225,14 +225,14 @@ def cut(__file__):
 
 	# eseguo remsi per la rilevazione dei silenzi
 	fancy_print(f"💡 Sto \033[93mgenerando\033[0m il comando di taglio ({__file__})")
-	remsi.elaborate(input_file, FFMPEG_CMD, args.n, args.d)
+	afilter, vfilter = remsi.elaborate(input_file, FFMPEG_CMD, args.n, args.d)
  
 	name 		= os.path.basename(filename)
 	tmp_path	= tempfile.gettempdir()
 	_tmp_output = f"{tmp_path}/{name}{TMP_FILE_MARK}{file_extension}"
  
 	# eseguo il comando di taglio
-	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{input_file}" {_t} -hide_banner -filter_script:v "{tmp_path}/vfilter.txt" -filter_script:a "{tmp_path}/afilter.txt" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
+	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{input_file}" {_t} -hide_banner -filter_script:v "{vfilter}" -filter_script:a "{afilter}" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
 	fancy_print(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})", command)
 	os.system(command)
 	shutil.move(_tmp_output, output)
@@ -241,8 +241,13 @@ def cut(__file__):
 		os.remove(f"{filename}[CFR]{file_extension}")
 	elif (args.preview):
 		os.remove(f"{filename}[CFR]{file_extension}")
-     
-  
+
+	# elimino i file di taglio
+	if os.path.exists(f"{afilter}"):
+		os.remove(f"{afilter}")
+	if os.path.exists(f"{vfilter}"):
+		os.remove(f"{vfilter}")
+   
 	# restituisci il nome del file di output
 	return output
 
@@ -328,19 +333,20 @@ if __name__ == "__main__":
 				edited_file = filename.replace(TMP_FILE_MARK, "[PREVIEW]")
    
 			# elimino il file junk senza crop e metadata
-			os.replace(filename, edited_file)
-			tmp_path= tempfile.gettempdir()
-			os.remove(f"{tmp_path}/afilter.txt")
-			os.remove(f"{tmp_path}/vfilter.txt")
+			shutil.move(filename, edited_file)
    
 			if (not args.preview):
 				# sposto in cut il file elaborato
-				pos = os.path.abspath(location + f"/{EDITED_FILES_DESTINATION_FOLDER}/" + os.path.basename(edited_file))
-				os.replace(edited_file, pos)
+				pos = os.path.abspath(folder + f"/{EDITED_FILES_DESTINATION_FOLDER}/" + os.path.basename(edited_file))
+				shutil.move(edited_file, pos)
 
 				# sposto il file originale
-				pos = os.path.abspath(location + f"/{ORIGINAL_FILES_DESTINATION_FOLDER}/" + os.path.basename(i))
-				os.rename(i, pos)
+				pos = os.path.abspath(folder + f"/{ORIGINAL_FILES_DESTINATION_FOLDER}/" + os.path.basename(i))
+				if (not os.path.exists(pos)):
+					shutil.move(i, pos)
+				else:
+					print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
+
     
    
 		except Exception as e:

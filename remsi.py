@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, re, os, tempfile
+import uuid
 
 def elaborate(input_file, ffmpeg_cmd, n=-40, d=0.8):
 	selectionsList = []
@@ -42,19 +43,21 @@ def elaborate(input_file, ffmpeg_cmd, n=-40, d=0.8):
 	tmp_path= tempfile.gettempdir()
 
 	# file audio
-	text_file = open(f"{tmp_path}/afilter.txt", "w") 
+	afilter = f"{tmp_path}/afilter_{str(uuid.uuid4())}.txt"
+	text_file = open(afilter, "w") 
 	text_file.write(f"afftdn=nr=10:nf={n}:tn=1, aselect=" + selectionFilter + ",asetpts=N/SR/TB" ) 
 	text_file.close()
 
 	# file video
-	text_file = open(f"{tmp_path}/vfilter.txt", "w") 
+	vfilter = f"{tmp_path}/vfilter_{str(uuid.uuid4())}.txt"
+	text_file = open(vfilter, "w") 
 	text_file.write("select=" + selectionFilter + ",setpts=N/FRAME_RATE/TB") 
 	text_file.close()
 	
 	if (os.path.exists(tmp)):
 		os.remove(tmp)
 	
- 
+	return afilter, vfilter
  
  
 """
