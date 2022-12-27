@@ -5,11 +5,10 @@ from tinytag import TinyTag
 import argparse
 import signal
 import platform
-import ffmpeg
 import tempfile
 import shutil
 import remsi
-
+import json
 
 # costanti di default
 NOISE	 = -40
@@ -26,21 +25,27 @@ try:
 	if (os.environ["EXPORT"] == "win"):
 		base_path = sys._MEIPASS
 		FFMPEG_CMD = base_path + "\\ffmpeg.exe"
+		FFPROBE_CMD = base_path + "\\ffprobe.exe -v quiet -print_format json -show_format -show_streams"
 
 	elif (os.environ["EXPORT"] == "linux"):
 		base_path = sys._MEIPASS
 		FFMPEG_CMD = base_path + "/ffmpeg"
+		FFPROBE_CMD = base_path + "/ffprobe -v quiet -print_format json -show_format -show_streams"
    
 except:
-	FFMPEG_CMD = "ffmpeg"
+	FFMPEG_CMD  = "ffmpeg"
+	FFPROBE_CMD = "ffprobe -v quiet -print_format json -show_format -show_streams"
 # ==================================    
 
 
 # calculate difference between two video duration
 def durationDiff(original, edited):
 	try:
-		video1 = int(float(ffmpeg.probe(original)["streams"][0]["duration"]))
-		video2 = int(float(ffmpeg.probe(edited)["streams"][0]["duration"]))
+		ffprobe_json1 = json.loads(os.popen(f'{FFPROBE_CMD} "{original}"').read())
+		ffprobe_json2 = json.loads(os.popen(f'{FFPROBE_CMD} "{edited}"').read())
+
+		video1 = int(float(ffprobe_json1["streams"][0]["duration"]))
+		video2 = int(float(ffprobe_json2["streams"][0]["duration"]))
 
 		minutes = str(int((abs(video1 - video2))/60))
 		seconds = f"{int((abs(video1 - video2))%60):02d}"
@@ -48,7 +53,9 @@ def durationDiff(original, edited):
 		return minutes + ":" + seconds
 
 	except Exception as e:
-		print(f"errore: {e}")
+		print(f"errore ffprobe: {e}")
+		print(original)
+		print(edited)
 		return "??:??"
 
 # argomenti
@@ -121,7 +128,8 @@ signal.signal(signal.SIGINT, signal_handler)
 def check_variable_framerate(media_file):
     
 	try:
-		denom = int(ffmpeg.probe(media_file)["streams"][0]["avg_frame_rate"].split("/")[1])
+		ffprobe_json = json.loads(os.popen(f'{FFPROBE_CMD} "{media_file}"').read())
+		denom = int(ffprobe_json["streams"][0]["avg_frame_rate"].split("/")[1])
 	
 		# se il denominatore è 1, allora il framerate è statico
 		if(denom == 1):
@@ -132,34 +140,10 @@ def check_variable_framerate(media_file):
 
 	# se si verifica qualche problema continuo ipotizzando
 	# che il file sia cfr
-	except:
-		return False
+	except Exception as e:
+		print(f"CFR non verificato correttamente! {e}")
+		return True
 
-
-"""
-# DEPRECATO
-# TAGLIA IL VIDEO E AGGIUNGE IL METADATA
-def crop(path, x=-1, y=-1, width=-1, height=-1, meta="cut"):
-	filename, file_extension = os.path.splitext(path)
-	location = os.path.dirname(os.path.abspath(path))
-
-	filename = filename.replace("[JUNK]", "")
-
-	if (x == -1 or y == -1 or width == -1 or height == -1):
-		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -c copy "{filename}[CUT]{file_extension}"'
-	
-	else:
-		command= f'ffmpeg -i "{path}" -hide_banner -metadata comment="cut" -filter:v "crop={width}:{height}:{x}:{y}" -threads 0 -preset ultrafast "{filename}[CUT]{file_extension}"'
-	
-	print(command)
-
-	try:
-		os.system(command)
-	except:
-		raise("Maybe not teams file")
-
-	return f"{filename}[CUT]{file_extension}"
-"""
 
 # converte un video a framerate variabile in un video a framerate statico
 def convert_to_cfr(_input_file, _output_file):
@@ -237,13 +221,14 @@ def cut(__file__):
 	os.system(command)
 	shutil.move(_tmp_output, output)
  
-	if( (not args.keep_cfr and os.path.exists(f"{filename}[CFR]{file_extension}") ) or args.preview):
+	# elimino il CFR nel caso fosse una preview e se il file esiste
+	if( ( (not args.keep_cfr and os.path.exists(f"{filename}[CFR]{file_extension}") ) or args.preview) and os.path.exists(f"{filename}[CFR]{file_extension}")):
 		try:
 			os.remove(f"{filename}[CFR]{file_extension}")
 		except:
 			print(f"\n\033[33m[WARN]\033[0m Il file {filename}[CFR]{file_extension} non è stato eliminato perché utilizzato da un altro processo.")
 
-	# elimino i file di taglio
+	# elimino i file temporanei relativi al taglio
 	if os.path.exists(f"{afilter}"):
 		os.remove(f"{afilter}")
 	if os.path.exists(f"{vfilter}"):
@@ -252,6 +237,7 @@ def cut(__file__):
 	# restituisci il nome del file di output
 	return output
 
+# funzione che riordina in modo alfanumerico
 def sort(lst):
     lst = [str(i) for i in lst]
     lst.sort()
@@ -263,11 +249,18 @@ if __name__ == "__main__":
 	path = args.path						# recupero il nome della cartella
 	location = os.path.abspath(path)		# recupero la posizione della cartella
  
+	# se il path è una cartella
 	if os.path.isdir(location):
 		folder = location
   
+	# se il path è un file
 	elif os.path.isfile(location):
 		folder = os.path.dirname(location)
+  
+	# path errato
+	else:
+		print("Errore, file non valido.")
+		exit()
 	
 	# creo la cartella fatti se non presente
 	if not os.path.exists(folder+f"/{ORIGINAL_FILES_DESTINATION_FOLDER}"):
@@ -308,33 +301,26 @@ if __name__ == "__main__":
 	for i in z:		
 		WORKING = i				# setto il file che sto elaborando
 		filename = cut(i) 		# eseguo il taglio
-
-		# verifico se è un video di teams
-		# if (args.teams):
-		#	filename = crop(filename, 62, 0, 1796, 972)
-	
-		# altrimenti aggiungo solo i metadata
-		#else:
-		#	filename = crop(filename)
   
 		if(args.x != -1):
 			speed(filename)
 
 		# rimuovo i file inutili
 		try:
-			# calcolo i secondi risparmiati
-			elapsed = durationDiff(i, filename)
-
-			print("\n")
-			fancy_print(f"✅ {i} \033[92mCompletato!\033[0m Sono stati risparmiati {elapsed} minuti")
-   
+      
 			if(not args.preview):
 				edited_file = filename.replace(TMP_FILE_MARK, EDITED_FILE_MARK)
 			else:
 				edited_file = filename.replace(TMP_FILE_MARK, "[PREVIEW]")
-   
-			# elimino il file junk senza crop e metadata
+    
+			# rinomino il file in definitivo
 			shutil.move(filename, edited_file)
+   
+			# calcolo i secondi risparmiati
+			elapsed = durationDiff(i, edited_file)
+
+			print("\n")
+			fancy_print(f"✅ {i} \033[92mCompletato!\033[0m Sono stati risparmiati {elapsed} minuti")
    
 			if (not args.preview):
 				# sposto in cut il file elaborato
@@ -353,3 +339,6 @@ if __name__ == "__main__":
 		except Exception as e:
 			print(f"errore: {e}")
 			print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
+
+
+# [TODO] se all'apertura la durata del CFR è differente da quella del video originale lo elimina e lo rigenera
