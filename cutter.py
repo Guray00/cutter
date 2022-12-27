@@ -39,17 +39,17 @@ except:
 # calculate difference between two video duration
 def durationDiff(original, edited):
 	try:
-		video1 = TinyTag.get(original) 
-		video2 = TinyTag.get(edited) 
+		video1 = int(float(ffmpeg.probe(original)["streams"][0]["duration"]))
+		video2 = int(float(ffmpeg.probe(edited)["streams"][0]["duration"]))
 
-		minutes = str(int((abs(video1.duration - video2.duration))/60))
-		seconds = f"{int((abs(video1.duration - video2.duration))%60):02d}"
+		minutes = str(int((abs(video1 - video2))/60))
+		seconds = f"{int((abs(video1 - video2))%60):02d}"
   
 		return minutes + ":" + seconds
 
 	except Exception as e:
 		print(f"errore: {e}")
-		return -1
+		return "??:??"
 
 # argomenti
 parser = argparse.ArgumentParser()
@@ -237,10 +237,11 @@ def cut(__file__):
 	os.system(command)
 	shutil.move(_tmp_output, output)
  
-	if(not args.keep_cfr and os.path.exists(f"{filename}[CFR]{file_extension}")):
-		os.remove(f"{filename}[CFR]{file_extension}")
-	elif (args.preview):
-		os.remove(f"{filename}[CFR]{file_extension}")
+	if( (not args.keep_cfr and os.path.exists(f"{filename}[CFR]{file_extension}") ) or args.preview):
+		try:
+			os.remove(f"{filename}[CFR]{file_extension}")
+		except:
+			print(f"\n\033[33m[WARN]\033[0m Il file {filename}[CFR]{file_extension} non è stato eliminato perché utilizzato da un altro processo.")
 
 	# elimino i file di taglio
 	if os.path.exists(f"{afilter}"):
