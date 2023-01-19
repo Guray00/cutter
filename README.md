@@ -28,14 +28,15 @@ positional arguments:
   path        the path of the video or the folder (for many videos) to cut
 
 options:
-  -h, --help  show this help message and exit
-  -d D        duration of silence in seconds (default: 0.8)
-  -n N        noise level in dB (default: -40)
-  -fr FR      output video frame rate
-  -x X        Speed of the video
-  -vfr        variable frame rate on output (if -fr is given, it indicates the max number of duplicates frames per second)
-  --keep-cfr  keeps Constant Frame Rate version of the file for future editing.
-  --preview   makes a preview of 180 seconds
+  -h, --help    show this help message and exit
+  -d D          duration of silence in seconds
+  -n [-80,-20]  noise level in dB (from -80 to -20)
+  -fr FR        output video frame rate
+  -x X          Speed of the video
+  -vfr          variable frame rate on output (if -fr is given, it indicates the max number of duplicates frames per
+                second)
+  --keep-cfr    keeps Constant Frame Rate version of the file for future editing.
+  --preview     makes a preview of 180 seconds
 ```
 
 ## Examples

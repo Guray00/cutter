@@ -44,8 +44,17 @@ def durationDiff(original, edited):
 		ffprobe_json1 = json.loads(os.popen(f'{FFPROBE_CMD} "{original}"').read())
 		ffprobe_json2 = json.loads(os.popen(f'{FFPROBE_CMD} "{edited}"').read())
 
-		video1 = int(float(ffprobe_json1["streams"][0]["duration"]))
-		video2 = int(float(ffprobe_json2["streams"][0]["duration"]))
+		if "streams" in ffprobe_json1 and "duration" in ffprobe_json1["streams"][0]:
+			video1 = int(float(ffprobe_json1["streams"][0]["duration"]))
+			video2 = int(float(ffprobe_json2["streams"][0]["duration"]))
+   
+		elif "format" in ffprobe_json1 and "duration" in ffprobe_json1["format"]:
+			video1 = int(float(ffprobe_json1["format"]["duration"]))
+			video2 = int(float(ffprobe_json2["format"]["duration"]))
+   
+		else:
+			return "??:??"
+	
 
 		minutes = str(int((abs(video1 - video2))/60))
 		seconds = f"{int((abs(video1 - video2))%60):02d}"
@@ -62,8 +71,8 @@ def durationDiff(original, edited):
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="the path of the video or the folder (for many videos) to cut")
 # parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
-parser.add_argument('-d', type=int, required=False, default=DURATION, help='duration of silence in seconds')
-parser.add_argument('-n', type=int, required=False, default=NOISE, help='noise level in dB')
+parser.add_argument('-d', type=float, required=False, default=DURATION, help='duration of silence in seconds')
+parser.add_argument('-n', type=int, choices=range(-80, -19), metavar="[-80,-20]", required=False, default=NOISE, help='noise level in dB (from -80 to -20)')
 parser.add_argument('-fr', type=int, required=False, help='output video frame rate')
 parser.add_argument('-x', type=float, default=-1, required=False, help='Speed of the video')
 parser.add_argument('-vfr', default=False, required=False, action="store_true", help='variable frame rate on output (if -fr is given, it indicates the max number of duplicates frames per second)')
@@ -144,6 +153,10 @@ def check_variable_framerate(media_file):
 		print(f"CFR non verificato correttamente! {e}")
 		return True
 
+def check_mp4(filename):
+    if (filename[-4:] == ".mp4"):
+        return True
+    return False
 
 # converte un video a framerate variabile in un video a framerate statico
 def convert_to_cfr(_input_file, _output_file):
@@ -163,9 +176,10 @@ def convert_to_cfr(_input_file, _output_file):
 	# decode delle opzioni
 	_fr  = f"-r {args.fr}" if (args.fr) else ""	# framerate
 	_t 	 = f"-t 180" if (args.preview) else ""
+	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
  
 	# effettua la conversione
-	command = f"{FFMPEG_CMD} -y -ignore_chapters 1 -i \"{_input_file}\" {_t} -hide_banner -loglevel info -vsync cfr -metadata comment=\"cfr version\" {_fr} -preset ultrafast \"{_tmp_file}\""
+	command = f"{FFMPEG_CMD} -y {_ignore_chapters} -i \"{_input_file}\" {_t} -hide_banner -loglevel info -vsync cfr -metadata comment=\"cfr version\" {_fr} -preset ultrafast \"{_tmp_file}\""
 	fancy_print(f"🔧 Sto \033[35mConvertendo\033[0m il file in CFR ({_input_file})", command)
 
 	os.system(command)
@@ -181,9 +195,10 @@ def speed(_input_file):
 
 	# decode
 	_t 	 = f"-t 180" if (args.preview)  else "" 				# modalità preview
+	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
 	
 	pts = 1/args.x
-	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast "{_tmp_output}"'
+	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast "{_tmp_output}"'
 	fancy_print(f"🚀 Sto \033[33mvelocizzando\033[0m il video ({_input_file})", command)
 	os.system(command)
 	# os.replace(_tmp_output, _input_file)
@@ -214,9 +229,10 @@ def cut(__file__):
 	name 		= os.path.basename(filename)
 	tmp_path	= tempfile.gettempdir()
 	_tmp_output = f"{tmp_path}/{name}{TMP_FILE_MARK}{file_extension}"
+	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
  
 	# eseguo il comando di taglio
-	command = f'{FFMPEG_CMD} -y -ignore_chapters 1 -i "{input_file}" {_t} -hide_banner -filter_script:v "{vfilter}" -filter_script:a "{afilter}" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
+	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{input_file}" {_t} -hide_banner -filter_script:v "{vfilter}" -filter_script:a "{afilter}" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
 	fancy_print(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})", command)
 	os.system(command)
 	shutil.move(_tmp_output, output)
@@ -260,7 +276,7 @@ if __name__ == "__main__":
 	# path errato
 	else:
 		print("Errore, file non valido.")
-		exit()
+		sys.exit(0)
 	
 	# creo la cartella fatti se non presente
 	if not os.path.exists(folder+f"/{ORIGINAL_FILES_DESTINATION_FOLDER}"):
