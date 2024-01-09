@@ -9,6 +9,7 @@ import tempfile
 import shutil
 import remsi
 import json
+from pathlib import Path
 
 # costanti di default
 NOISE	 = -40
@@ -300,10 +301,10 @@ if __name__ == "__main__":
 			if file_extension not in [".mp4", ",mkv"]:
 				continue
 
-			if TinyTag.get(path).comment == "cfr version":
+			if TinyTag.get(Path(path).as_posix()).comment == "cfr version":
 				continue
 
-			if TinyTag.get(path).comment == "edited":
+			if TinyTag.get(Path(path).as_posix()).comment == "edited":
 				continue
 			
 			y.append(f"{filename}{file_extension}")
