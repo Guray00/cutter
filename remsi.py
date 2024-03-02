@@ -7,12 +7,12 @@ def elaborate(input_file, ffmpeg_cmd, n=-40, d=0.8):
 	selectionsList = []
 	timeSelection = "between(t,0,"
 	filename = inputFile = end = start = None
- 
+
 	tmp_path= tempfile.gettempdir()
 	tmp = f'{tmp_path}/remsi.txt'
 	command = f'{ffmpeg_cmd} -i "{input_file}" -hide_banner -af silencedetect=n={n}dB:d={d} -preset ultrafast -f null -  > {tmp} 2>&1'
 	os.system(command)
- 
+
 	file_stream = open(f"{tmp}", "r")
 
 	# read standard input once, line by line
@@ -44,22 +44,22 @@ def elaborate(input_file, ffmpeg_cmd, n=-40, d=0.8):
 
 	# file audio
 	afilter = f"{tmp_path}/afilter_{str(uuid.uuid4())}.txt"
-	text_file = open(afilter, "w") 
-	text_file.write(f"afftdn=nr=10:nf={n}:tn=1, aselect=" + selectionFilter + ",asetpts=N/SR/TB" ) 
+	text_file = open(afilter, "w")
+	text_file.write(f"afftdn=nr=10:nf={n}:tn=1, aselect=" + selectionFilter + ",asetpts=N/SR/TB" )
 	text_file.close()
 
 	# file video
 	vfilter = f"{tmp_path}/vfilter_{str(uuid.uuid4())}.txt"
-	text_file = open(vfilter, "w") 
-	text_file.write("select=" + selectionFilter + ",setpts=N/FRAME_RATE/TB") 
+	text_file = open(vfilter, "w")
+	text_file.write("select=" + selectionFilter + ",setpts=N/FRAME_RATE/TB")
 	text_file.close()
-	
+
 	if (os.path.exists(tmp)):
 		os.remove(tmp)
-	
+
 	return afilter, vfilter
- 
- 
+
+
 """
 MIT License
 
@@ -81,5 +81,5 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE. 
+SOFTWARE.
 """

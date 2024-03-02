@@ -1,7 +1,9 @@
+#!/usr/bin/python3
+
 import glob
 import os
 import sys
-from tinytag import TinyTag 
+from tinytag import TinyTag
 import argparse
 import signal
 import platform
@@ -32,11 +34,11 @@ try:
 		base_path = sys._MEIPASS
 		FFMPEG_CMD = base_path + "/ffmpeg"
 		FFPROBE_CMD = base_path + "/ffprobe -v quiet -print_format json -show_format -show_streams"
-   
+
 except:
 	FFMPEG_CMD  = "ffmpeg"
 	FFPROBE_CMD = "ffprobe -v quiet -print_format json -show_format -show_streams"
-# ==================================    
+# ==================================
 
 
 # calculate difference between two video duration
@@ -48,18 +50,18 @@ def durationDiff(original, edited):
 		if "streams" in ffprobe_json1 and "duration" in ffprobe_json1["streams"][0]:
 			video1 = int(float(ffprobe_json1["streams"][0]["duration"]))
 			video2 = int(float(ffprobe_json2["streams"][0]["duration"]))
-   
+
 		elif "format" in ffprobe_json1 and "duration" in ffprobe_json1["format"]:
 			video1 = int(float(ffprobe_json1["format"]["duration"]))
 			video2 = int(float(ffprobe_json2["format"]["duration"]))
-   
+
 		else:
 			return "??:??"
-	
+
 
 		minutes = str(int((abs(video1 - video2))/60))
 		seconds = f"{int((abs(video1 - video2))%60):02d}"
-  
+
 		return minutes + ":" + seconds
 
 	except Exception as e:
@@ -86,12 +88,12 @@ def print_centered(text):
 	print("\033[1;37;40m")
 	print(text.center(os.get_terminal_size().columns))
 	print("\033[0;37;40m")
- 
- 
+
+
  # print full line of "="
 def print_line():
     print("─"*os.get_terminal_size().columns)
-    
+
 # stampa le informazioni sui comandi eseguiti
 def fancy_print(arg1, arg2=""):
 	print_line()
@@ -106,19 +108,19 @@ def signal_handler(sig, frame):
 	print_line()
 	print_centered("⛔️ Rilevata \033[91mchiusura\033[0m forzata ⛔️")
 	print_centered("Era in corso: " + WORKING)
-    
+
 	if (WORKING != ""):
 		filename, file_extension = os.path.splitext(WORKING)
-		
+
 		# elimino i file non completati
 		try:
 			os.remove(f'{filename}[JUNK]{file_extension}')
 		except:
 			pass
-			
+
 		try:
 			os.remove(f'{filename}[CUT]{file_extension}')
-      
+
 		except:
 			pass
 
@@ -130,17 +132,17 @@ def signal_handler(sig, frame):
 	print_line()
 	print("\n\n")
 	sys.exit(0)
-    
+
 # handler di CTRL+C
 signal.signal(signal.SIGINT, signal_handler)
 
 # controlla se un video è a framerate variabile
 def check_variable_framerate(media_file):
-    
+
 	try:
 		ffprobe_json = json.loads(os.popen(f'{FFPROBE_CMD} "{media_file}"').read())
 		denom = int(ffprobe_json["streams"][0]["avg_frame_rate"].split("/")[1])
-	
+
 		# se il denominatore è 1, allora il framerate è statico
 		if(denom == 1):
 			return False
@@ -161,7 +163,7 @@ def check_mp4(filename):
 
 # converte un video a framerate variabile in un video a framerate statico
 def convert_to_cfr(_input_file, _output_file):
-    
+
     # se è già stato correttamente processato
 	if ( os.path.exists(_output_file) and TinyTag.get(_output_file).comment == "cfr version"):
 		return
@@ -171,14 +173,14 @@ def convert_to_cfr(_input_file, _output_file):
 	tmp_path= tempfile.gettempdir()
 
 	_tmp_file = f"{tmp_path}/{name}{TMP_FILE_MARK}{file_extension}"
- 
+
 	#_tmp_output = f"{tmp_path}/{name}{file_extension}"			# creo il nome del file di output temporaneo
- 
+
 	# decode delle opzioni
 	_fr  = f"-r {args.fr}" if (args.fr) else ""	# framerate
 	_t 	 = f"-t 180" if (args.preview) else ""
 	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
- 
+
 	# effettua la conversione
 	command = f"{FFMPEG_CMD} -y {_ignore_chapters} -i \"{_input_file}\" {_t} -hide_banner -loglevel info -vsync cfr -metadata comment=\"cfr version\" {_fr} -preset ultrafast \"{_tmp_file}\""
 	fancy_print(f"🔧 Sto \033[35mConvertendo\033[0m il file in CFR ({_input_file})", command)
@@ -186,18 +188,18 @@ def convert_to_cfr(_input_file, _output_file):
 	os.system(command)
 	shutil.move(_tmp_file, _output_file)
 
- 
+
 def speed(_input_file):
 	filename, file_extension = os.path.splitext(_input_file)	# recupero il filename ed estensione
 	name = os.path.basename(filename)
 	tmp_path= tempfile.gettempdir()
- 
+
 	_tmp_output = f"{tmp_path}/{name}{file_extension}"			# creo il nome del file di output temporaneo
 
 	# decode
 	_t 	 = f"-t 180" if (args.preview)  else "" 				# modalità preview
 	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
-	
+
 	pts = 1/args.x
 	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast "{_tmp_output}"'
 	fancy_print(f"🚀 Sto \033[33mvelocizzando\033[0m il video ({_input_file})", command)
@@ -209,35 +211,35 @@ def speed(_input_file):
 
 # taglia il file
 def cut(__file__):
-	filename, file_extension = os.path.splitext(__file__)		# recupero il filename ed estensione	
+	filename, file_extension = os.path.splitext(__file__)		# recupero il filename ed estensione
 	output = f"{filename}{TMP_FILE_MARK}{file_extension}"		# creo il nome del file di output
 	input_file = __file__
- 
+
 	if(check_variable_framerate(__file__)):
 		input_file = f"{filename}[CFR]{file_extension}"
 		convert_to_cfr(__file__, input_file)
-  
-	# decoding delle impostazioni per ffmpeg	
+
+	# decoding delle impostazioni per ffmpeg
 	_fr  = f"-r {args.fr}" if (args.fr) else ""	# framerate
 	_vfr = f"-vsync vfr" if (args.vfr)  else ""	# framerate
 	_t 	 = f"-t 180" if (args.preview)  else "" # modalità preview
- 
+
 
 	# eseguo remsi per la rilevazione dei silenzi
 	fancy_print(f"💡 Sto \033[93mgenerando\033[0m il comando di taglio ({__file__})")
 	afilter, vfilter = remsi.elaborate(input_file, FFMPEG_CMD, args.n, args.d)
- 
+
 	name 		= os.path.basename(filename)
 	tmp_path	= tempfile.gettempdir()
 	_tmp_output = f"{tmp_path}/{name}{TMP_FILE_MARK}{file_extension}"
 	_ignore_chapters = "-ignore_chapters 1" if (check_mp4(filename)) else ""
- 
+
 	# eseguo il comando di taglio
 	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{input_file}" {_t} -hide_banner -filter_script:v "{vfilter}" -filter_script:a "{afilter}" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
 	fancy_print(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})", command)
 	os.system(command)
 	shutil.move(_tmp_output, output)
- 
+
 	# elimino il CFR nel caso fosse una preview e se il file esiste
 	if( ( (not args.keep_cfr and os.path.exists(f"{filename}[CFR]{file_extension}") ) or args.preview) and os.path.exists(f"{filename}[CFR]{file_extension}")):
 		try:
@@ -250,7 +252,7 @@ def cut(__file__):
 		os.remove(f"{afilter}")
 	if os.path.exists(f"{vfilter}"):
 		os.remove(f"{vfilter}")
-   
+
 	# restituisci il nome del file di output
 	return output
 
@@ -265,20 +267,20 @@ def sort(lst):
 if __name__ == "__main__":
 	path = args.path						# recupero il nome della cartella
 	location = os.path.abspath(path)		# recupero la posizione della cartella
- 
+
 	# se il path è una cartella
 	if os.path.isdir(location):
 		folder = location
-  
+
 	# se il path è un file
 	elif os.path.isfile(location):
 		folder = os.path.dirname(location)
-  
+
 	# path errato
 	else:
 		print("Errore, file non valido.")
 		sys.exit(0)
-	
+
 	# creo la cartella fatti se non presente
 	if not os.path.exists(folder+f"/{ORIGINAL_FILES_DESTINATION_FOLDER}"):
         	os.makedirs(folder+f"/{ORIGINAL_FILES_DESTINATION_FOLDER}")
@@ -288,13 +290,13 @@ if __name__ == "__main__":
         	os.makedirs(folder+f"/{EDITED_FILES_DESTINATION_FOLDER}")
 
 
-	y = [] 
- 
+	y = []
+
 	# scansiono tutti i file della cartella
 	if os.path.isdir(location):
 		for path in os.scandir(location):
 			filename, file_extension = os.path.splitext(path)
-	
+
 			if not path.is_file():
 				continue
 
@@ -306,39 +308,39 @@ if __name__ == "__main__":
 
 			if TinyTag.get(Path(path).as_posix()).comment == "edited":
 				continue
-			
+
 			y.append(f"{filename}{file_extension}")
-   
+
 	elif os.path.isfile(location):
 		y.append(location)
 
 	z = sort(y)
- 
+
 	# per ogni video esaminato
-	for i in z:		
+	for i in z:
 		WORKING = i				# setto il file che sto elaborando
 		filename = cut(i) 		# eseguo il taglio
-  
+
 		if(args.x != -1):
 			speed(filename)
 
 		# rimuovo i file inutili
 		try:
-      
+
 			if(not args.preview):
 				edited_file = filename.replace(TMP_FILE_MARK, EDITED_FILE_MARK)
 			else:
 				edited_file = filename.replace(TMP_FILE_MARK, "[PREVIEW]")
-    
+
 			# rinomino il file in definitivo
 			shutil.move(filename, edited_file)
-   
+
 			# calcolo i secondi risparmiati
 			elapsed = durationDiff(i, edited_file)
 
 			print("\n")
 			fancy_print(f"✅ {i} \033[92mCompletato!\033[0m Sono stati risparmiati {elapsed} minuti")
-   
+
 			if (not args.preview):
 				# sposto in cut il file elaborato
 				pos = os.path.abspath(folder + f"/{EDITED_FILES_DESTINATION_FOLDER}/" + os.path.basename(edited_file))
@@ -351,8 +353,8 @@ if __name__ == "__main__":
 				else:
 					print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
 
-    
-   
+
+
 		except Exception as e:
 			print(f"errore: {e}")
 			print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
