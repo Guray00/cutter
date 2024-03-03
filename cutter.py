@@ -65,7 +65,7 @@ def durationDiff(original, edited):
 		return minutes + ":" + seconds
 
 	except Exception as e:
-		print(f"errore ffprobe: {e}")
+		print(f"ffprobe error: {e}")
 		print(original)
 		print(edited)
 		return "??:??"
@@ -73,7 +73,6 @@ def durationDiff(original, edited):
 # argomenti
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="the path of the video or the folder (for many videos) to cut")
-# parser.add_argument("--teams", default=False,action="store_true", help="crops the video")
 parser.add_argument('-d', type=float, required=False, default=DURATION, help='duration of silence in seconds')
 parser.add_argument('-n', type=int, choices=range(-80, -19), metavar="[-80,-20]", required=False, default=NOISE, help='noise level in dB (from -80 to -20)')
 parser.add_argument('-fr', type=int, required=False, help='output video frame rate')
@@ -106,8 +105,8 @@ def fancy_print(arg1, arg2=""):
 def signal_handler(sig, frame):
 	print()
 	print_line()
-	print_centered("⛔️ Rilevata \033[91mchiusura\033[0m forzata ⛔️")
-	print_centered("Era in corso: " + WORKING)
+	print_centered("⛔️ \033[91mForced close\033[0m detected ⛔️")
+	print_centered("In progress: " + WORKING)
 
 	if (WORKING != ""):
 		filename, file_extension = os.path.splitext(WORKING)
@@ -153,7 +152,7 @@ def check_variable_framerate(media_file):
 	# se si verifica qualche problema continuo ipotizzando
 	# che il file sia cfr
 	except Exception as e:
-		print(f"CFR non verificato correttamente! {e}")
+		print(f"CFR not checked correctly! {e}")
 		return True
 
 def check_mp4(filename):
@@ -183,7 +182,7 @@ def convert_to_cfr(_input_file, _output_file):
 
 	# effettua la conversione
 	command = f"{FFMPEG_CMD} -y {_ignore_chapters} -i \"{_input_file}\" {_t} -hide_banner -loglevel info -vsync cfr -metadata comment=\"cfr version\" {_fr} -preset ultrafast \"{_tmp_file}\""
-	fancy_print(f"🔧 Sto \033[35mConvertendo\033[0m il file in CFR ({_input_file})", command)
+	fancy_print(f"🔧 \033[35mConverting\033[0m file in CFR ({_input_file})", command)
 
 	os.system(command)
 	shutil.move(_tmp_file, _output_file)
@@ -202,7 +201,7 @@ def speed(_input_file):
 
 	pts = 1/args.x
 	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{_input_file}" {_t} -hide_banner -filter:v "setpts=PTS*{pts}" -filter:a "atempo={args.x}"  -preset ultrafast "{_tmp_output}"'
-	fancy_print(f"🚀 Sto \033[33mvelocizzando\033[0m il video ({_input_file})", command)
+	fancy_print(f"🚀 \033[33mSpeeding up\033[0m video ({_input_file})", command)
 	os.system(command)
 	# os.replace(_tmp_output, _input_file)
 	shutil.move(_tmp_output, _input_file)
@@ -226,7 +225,7 @@ def cut(__file__):
 
 
 	# eseguo remsi per la rilevazione dei silenzi
-	fancy_print(f"💡 Sto \033[93mgenerando\033[0m il comando di taglio ({__file__})")
+	fancy_print(f"💡 \033[93mCreating\033[0m the cutting command ({__file__})")
 	afilter, vfilter = remsi.elaborate(input_file, FFMPEG_CMD, args.n, args.d)
 
 	name 		= os.path.basename(filename)
@@ -236,7 +235,7 @@ def cut(__file__):
 
 	# eseguo il comando di taglio
 	command = f'{FFMPEG_CMD} -y {_ignore_chapters} -i "{input_file}" {_t} -hide_banner -filter_script:v "{vfilter}" -filter_script:a "{afilter}" {_vfr} {_fr} -metadata comment="edited" "{_tmp_output}"'
-	fancy_print(f"✂️ Sto \033[94mtagliando\033[0m il file ({__file__})", command)
+	fancy_print(f"✂️ \033[94mCutting\033[0m file ({__file__})", command)
 	os.system(command)
 	shutil.move(_tmp_output, output)
 
@@ -245,7 +244,7 @@ def cut(__file__):
 		try:
 			os.remove(f"{filename}[CFR]{file_extension}")
 		except:
-			print(f"\n\033[33m[WARN]\033[0m Il file {filename}[CFR]{file_extension} non è stato eliminato perché utilizzato da un altro processo.")
+			print(f"\n\033[33m[WARN]\033[0m The file {filename}[CFR]{file_extension} hasn't been deleted because was in progress by another process.")
 
 	# elimino i file temporanei relativi al taglio
 	if os.path.exists(f"{afilter}"):
@@ -278,7 +277,7 @@ if __name__ == "__main__":
 
 	# path errato
 	else:
-		print("Errore, file non valido.")
+		print("Error, file not valid.")
 		sys.exit(0)
 
 	# creo la cartella fatti se non presente
@@ -339,7 +338,7 @@ if __name__ == "__main__":
 			elapsed = durationDiff(i, edited_file)
 
 			print("\n")
-			fancy_print(f"✅ {i} \033[92mCompletato!\033[0m Sono stati risparmiati {elapsed} minuti")
+			fancy_print(f"✅ {i} \033[92mCompleted!\033[0m You have saved {elapsed} minutes")
 
 			if (not args.preview):
 				# sposto in cut il file elaborato
@@ -351,13 +350,11 @@ if __name__ == "__main__":
 				if (not os.path.exists(pos)):
 					shutil.move(i, pos)
 				else:
-					print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
-
-
+					print("⚠️ The file " + i+ " hasn't been moved because was already in the originals' folder.")
 
 		except Exception as e:
-			print(f"errore: {e}")
-			print("⚠️ Non ho spostato il file " + i+ " perchè già presente nella cartella degli originali.")
+			print(f"error: {e}")
+			print("⚠️ The file " + i+ " hasn't been moved because was already in the originals' folder.")
 
 
 # [TODO] se all'apertura la durata del CFR è differente da quella del video originale lo elimina e lo rigenera
